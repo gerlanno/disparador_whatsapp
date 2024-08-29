@@ -1,0 +1,6 @@
+*.env
+/data/*
+view.json
+/tests/*
+*.log
+/venv/*
