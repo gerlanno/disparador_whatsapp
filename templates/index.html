@@ -1,0 +1,39 @@
+{% extends "base.html" %} {% block title %}Index{% endblock %} {% block content
+%}
+
+<h1>Index Page</h1>
+<form action="{{ url_for('detalhes_linha') }}" method="GET">
+  <label for="linhas">Escolha uma linha:</label>
+  <select name="id_linha" id="linhas">
+    <option value="">Selecionar linha</option>
+    {% for number in numberlist %}
+    <option value="{{ number.id_linha }}">{{ number.id_linha }}</option>
+    {% endfor %}
+  </select>
+  <br /><br />
+  <input type="submit" value="Submit" />
+</form>
+
+<h3>Cadastrar linha</h3>
+
+<form action="{{ url_for('index') }}" method="POST">
+  <input
+    type="text"
+    name="id_linha"
+    placeholder="ID da Linha"
+    required="required"
+  /><br />
+  <input
+    type="text"
+    name="num_linha"
+    placeholder="Número da Linha"
+    required="required"
+  /><br />
+
+  <input type="SUBMIT" value="CREATE" />
+</form>
+
+<br />
+
+<h6>{{ found }}</h6>
+{% endblock %}
