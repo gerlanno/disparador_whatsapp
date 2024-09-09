@@ -1,13 +1,13 @@
 from flask import request, render_template, jsonify
 from models import *
-from services import (
-    disparador,
-    intervalo_aleatorio,
-    linha_aleatoria
-)
+from services import disparador, intervalo_aleatorio, linha_aleatoria
 
 
 def setup_routes(app, db):
+    @app.route("/")
+    def home_page():
+        return render_template("base.html")
+
     @app.route("/linhas", methods=["GET", "POST"])
     def index():
 
@@ -24,7 +24,6 @@ def setup_routes(app, db):
                     }
                 )
             return jsonify({"resultado": resultado})
-           
 
         # Cadastrar Linha
         elif request.method == "POST":
@@ -72,7 +71,6 @@ def setup_routes(app, db):
                     }
                 )
             return jsonify({"resultado": resultado})
-            
 
         # Cadastrar Mensagem
         elif request.method == "POST":
@@ -87,9 +85,9 @@ def setup_routes(app, db):
                 print(e)
                 return jsonify({"status": "failed"})
 
-    @app.route("/leads", methods=["GET","POST"])
-    def leads(): 
-               # Listar leads
+    @app.route("/leads", methods=["GET", "POST"])
+    def leads():
+        # Listar leads
         if request.method == "GET":
             resultado = []
             leads = Lead.query.all()
@@ -102,7 +100,6 @@ def setup_routes(app, db):
                     }
                 )
             return jsonify({"resultado": resultado})
-            
 
         # Cadastrar Lead
         elif request.method == "POST":
@@ -121,7 +118,7 @@ def setup_routes(app, db):
     def disparos():
         """
         1 - Tipo de disparo - linha fixa ou aleatória
-        2 - Tipo de intervalo - Intervalo fixo ou aleatório                
+        2 - Tipo de intervalo - Intervalo fixo ou aleatório
         """
         data = request.args
         tipo_disparo = data.get("tipo_disparo")
@@ -129,15 +126,8 @@ def setup_routes(app, db):
         intervalo = data.get("intervalo")
 
         if tipo_disparo == "fixo":
-            linha = data.get("linha")           
+            linha = data.get("linha")
 
         elif tipo_disparo == "aleatorio":
-            linhas = request.form.getlist("linhas")            
-            disparador(tipo_disparo, linhas, tipo_intervalo, intervalo)
-    
-
-       
-            
-
-
-
+            linha = request.form.getlist("linhas")
+        disparador(tipo_disparo, linha, tipo_intervalo, intervalo)
