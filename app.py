@@ -11,10 +11,12 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///disparador.db"
 
     db.init_app(app)
+    
     from routes import setup_routes
 
     setup_routes(app, db)
 
     migrate = Migrate(app, db)
+    
 
     return app

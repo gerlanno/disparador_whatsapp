@@ -2,41 +2,66 @@
 <html lang="pt-br">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../static/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" href="../static/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
 
-    <title>Index</title>
+    <title>{% block title %}{% endblock %}</title>
+
 </head>
 
 <body>
-    <aside id="header">
-        <section class="disparador">
+    <div class="container packed">
 
-            <h1>Disparador</h1>
-            <div class="nav-links mt-4 text-center">
+        <div class="col-12">
+            <div class="container-fluid header">
 
-                <a href="http://www.google.com">
-                    <i class="bi bi-house-door"></i>
-                </a>
-                <a href="http://wwww.google.com">
-                    <i class="bi bi-telephone-plus"></i>
-                </a>
-                <a href="http://www.google.com">
-                    <i class="bi bi-chat-dots"></i>
-                </a>
-                <a href="http://www.google.com">
-                    <i class="bi bi-rocket-takeoff"></i>
-                </a>
+                <span class="navbar-text h1">
+                    <i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
+                            <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
+                        </svg>
+                        Disparador</i>
+                </span>
             </div>
-        </section>
-    </aside>
+        </div>
 
+
+        <div class="row">
+            <div class="col-2">
+                <nav>
+                    <ul class="gap-1 p-3 nav d-flex flex-column align-items-center menu-lateral">
+                        <li class="nav-item">
+                      
+                           <a class="p-2 nav-link text-secondary-emphasis" aria-current="page" href="{{ url_for('instancias') }}"> Instâncias</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="p-2 nav-link text-secondary-emphasis" aria-current="page" href="{{ url_for('criar_instancias') }}">Criar Instâncias</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="p-2 nav-link active text-secondary-emphasis aria-current="page" href="{{ url_for('disparos') }}">Disparador</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="p-2 nav-link active text-secondary-emphasis aria-current="page" href="{{ url_for('instancias') }}">Configurações</a>
+                        </li>
+
+                    </ul>
+                </nav>
+            </div>
+            <div class="col-10">
+                <main>
+                    {% block content %}
+                    {% endblock %}
+                </main>
+            </div>
+        </div>
+    </div>
 
     <script src="../static/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="../static/script.js"></script>
+
 </body>
 
 </html>

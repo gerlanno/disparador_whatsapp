@@ -1,43 +1,43 @@
-from flask import request, render_template, jsonify
+from flask import redirect, request, render_template, jsonify, url_for
 from models import *
-from services import disparador, intervalo_aleatorio, linha_aleatoria
+from services import (disparador, 
+                      intervalo_aleatorio, 
+                      linha_aleatoria, 
+                      get_qrcode,
+                      get_status,
+                      get_client,
+                      terminate_session)
+
 
 
 def setup_routes(app, db):
     @app.route("/")
     def home_page():
-        return render_template("base.html")
+        return render_template("index.html")
 
-    @app.route("/linhas", methods=["GET", "POST"])
-    def index():
+    @app.route("/instancias", methods=["GET", "POST"])
+    def instancias():
 
-        # Listar linhas
+        # Listar instâncias
         if request.method == "GET":
             resultado = []
-            linhas = Linha.query.all()
-            for linha in linhas:
+            instances = Instances.query.all()
+            for instance in instances:
+                session_info = get_client(instance.name)
                 resultado.append(
                     {
-                        "id": linha.id,
-                        "id_linha": linha.id_linha,
-                        "num_linha": linha.numero,
+                        "id": instance.id,
+                        "name": instance.name,                        
+                        "status": get_status(instance.name),
+                        "client": session_info.get("client"),
+                        "phone_number": session_info.get("phone_number"),
                     }
                 )
-            return jsonify({"resultado": resultado})
+           
+            #return jsonify({"resultado": resultado})
+            return render_template("instancias.html", instancias=resultado)
 
-        # Cadastrar Linha
-        elif request.method == "POST":
-            data = request.args
-            id_linha = data.get("id_linha")
-            num_linha = data.get("num_linha")
-            linha = Linha(id_linha=id_linha, numero=num_linha)
-            try:
-                db.session.add(linha)
-                db.session.commit()
-                return jsonify({"status": "sucess"})
-            except Exception as e:
-                print(e)
-                return jsonify({"status": "failed"})
+ 
 
     # Detalhes das linhas cadastradas
     @app.route("/linhas/<id>", methods=["GET"])
@@ -114,12 +114,13 @@ def setup_routes(app, db):
                 print(e)
                 return jsonify({"status": "failed"})
 
-    @app.route("/disparos", methods=["POST"])
+    @app.route("/disparos", methods=["POST", "GET"])
     def disparos():
+
         """
         1 - Tipo de disparo - linha fixa ou aleatória
         2 - Tipo de intervalo - Intervalo fixo ou aleatório
-        """
+        
         data = request.args
         tipo_disparo = data.get("tipo_disparo")
         tipo_intervalo = data.get("tipo_intervalo")
@@ -130,4 +131,77 @@ def setup_routes(app, db):
 
         elif tipo_disparo == "aleatorio":
             linha = request.form.getlist("linhas")
-        disparador(tipo_disparo, linha, tipo_intervalo, intervalo)
+            """
+        return render_template("disparar.html")
+
+
+    @app.route("/criar-instancias", methods=["POST", "GET"])
+    def criar_instancias():
+        if request.method == "POST":
+            name = request.form.get("addInstancia")
+            new_instance = Instances(name=name)
+            try:
+                db.session.add(new_instance)
+                db.session.commit()
+                return jsonify({"status": "sucess"})
+            except Exception as error:
+                return jsonify({"Erro": error})
+
+        return render_template("criar-instancia.html")
+    
+
+    @app.route("/deletar/<id>", methods=["GET"])
+    def delete(id):
+        if request.method == "GET":            
+            Instances.query.filter(Instances.id == id).delete()
+            db.session.commit()
+            
+            resultado = []
+            instances = Instances.query.all()
+            for instance in instances:
+                resultado.append(
+                    {
+                        "id": instance.id,
+                        "name": instance.name,
+
+                    }
+                )
+            #return jsonify({"resultado": resultado})
+            return render_template("instancias.html", numberlist=resultado)
+        
+    @app.route("/qrcode")
+    def qrcode():
+        instance = request.args.get("instancia")
+        print(instance)
+        qrcode = get_qrcode(instance)
+
+        return qrcode, 200
+    
+
+    @app.route("/terminate/<instance>", methods=["GET"])
+    def terminate(instance):
+        if request.method == "GET":            
+            terminate_session(instance)
+            #return jsonify({"resultado": resultado})
+        return redirect("/instancias", 302)
+    
+    @app.route("/webhook", methods=["POST", "GET"])
+    def webhook():
+        if request.method == "GET":          
+            return "<h1>Bad Request</h1>", 400  # Para o caso de dados inválidos no POST
+        elif request.method == "POST":
+            data = request.get_json()
+            if data:
+                print(data)                
+        return "<h1>Bad Request</h1>", 400  # Para o caso de dados inválidos no POST
+    
+    @app.route("/teste-form", methods=["POST", "GET"])
+    def test_form():
+        if not "disparoAleatorio" in request.form.keys():
+            modoDisparo = "normal"
+        else:
+            modoDisparo = "randomico"
+        for key in request.form.keys():
+            value = request.form.get(key)
+            print(f"{key} : {value} - Modo de disparo: {modoDisparo}")
+        return redirect(url_for("home_page")), 200

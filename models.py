@@ -6,36 +6,31 @@ executar comando <flask db migrate> e <flask db upgrade>
 ao realizar algura alteração no arquivo models
 """
 
-class Linha(db.Model):
-    __tablename__ = 'linhas'
+class Instances(db.Model):
+    __tablename__ = 'instances'
     id = db.Column(db.Integer, primary_key=True, )
-    numero = db.Column(db.String(20), unique=True, nullable=False)
-    id_linha = db.Column(db.String(40), nullable=False)
-
-
+    name = db.Column(db.String(20), unique=True, nullable=False)
     def __repr__(self) -> str:
-        return f"Linha {self.id} - {self.id_linha} - {self.numero}"
+        return f"Instância {self.id} - {self.name}"
 
-class Mensagem(db.Model):
+class Message(db.Model):
     __tablename__= 'mensagens'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40), nullable=False)
-    conteudo = db.Column(db.String(160), nullable=False)
-
+    content = db.Column(db.String(160), nullable=False)
 
     def __repr__(self) -> str:
-        return f"Mensagem: {self.id} - {self.name} - {self.conteudo}"
+        return f"Mensagem: {self.id} - {self.name} - {self.content}"
     
 
 class Lead(db.Model):
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    telefone = db.Column(db.String(20), unique=True, nullable=False)
-
+    lead_name = db.Column(db.String(100), nullable=False)
+    phone_number = db.Column(db.String(20), unique=True, nullable=False)
 
     def __repr__(self) -> str:
-        return f"Lead: {self.id} - {self.nome} - {self.telefone}"
+        return f"Lead: {self.id} - {self.lead_name} - {self.phone_number}"
     
 
     

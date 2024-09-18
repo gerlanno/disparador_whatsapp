@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Iniciar Disparos{% endblock %}
+
+{% block content %}
+
+<div id="inicio" class="container text-start">
+    
+        <div class="card">
+            <h4 class="card-header">Iniciar Disparos</h4>
+            <div class="card-body">
+                <form class="row g-3" action="{{ url_for('test_form')}}" method="POST" id="disparador" name="formDisparador">
+                    <div class="col-md-6">
+                        <label for="inputState" class="form-label">Instâncias</label>
+                        <select id="inputState" class="form-select" name="selectedInstance">
+                            <option selected>Selecione</option>
+                            <option>Gerlanno</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="flexSwitchCheckDefault" class="form-label">Modo disparo</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" name="disparoAleatorio">
+                            <label class="form-check-label" for="flexSwitchCheckDefault">Ativar instância aleatória</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label for="exampleFormControlTextarea1" class="form-label">Mensagem</label>
+                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="textAreaMensagem"></textarea>
+                    </div>
+                   
+                    <div class="col-md-6">
+                        <label for="inputTargets" class="form-label">Contatos</label>
+                        <input type="text" class="form-control" id="inputTargets" name="inputTargets">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="delayInterval" class="form-label">Zip</label>
+                        <input type="number" class="form-control" id="delayInterval" name="delayInterval">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="gridCheck" name="intervaloAleatorio">
+                            <label class="form-check-label" for="gridCheck">
+                                Intervalo Aleatório
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <input type="submit" class="btn btn-success btn-sm" value="Inciar disparos">
+                    </div>
+                </form>
+            </div>
+        </div>
+   
+</div>
+{% endblock %}
