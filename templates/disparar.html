@@ -4,53 +4,56 @@
 {% block content %}
 
 <div id="inicio" class="container text-start">
-    
-        <div class="card">
-            <h4 class="card-header">Iniciar Disparos</h4>
-            <div class="card-body">
-                <form class="row g-3" action="{{ url_for('test_form')}}" method="POST" id="disparador" name="formDisparador">
-                    <div class="col-md-6">
-                        <label for="inputState" class="form-label">Instâncias</label>
-                        <select id="inputState" class="form-select" name="selectedInstance">
-                            <option selected>Selecione</option>
-                            <option>Gerlanno</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="flexSwitchCheckDefault" class="form-label">Modo disparo</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" name="disparoAleatorio">
-                            <label class="form-check-label" for="flexSwitchCheckDefault">Ativar instância aleatória</label>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <label for="exampleFormControlTextarea1" class="form-label">Mensagem</label>
-                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="textAreaMensagem"></textarea>
-                    </div>
-                   
-                    <div class="col-md-6">
-                        <label for="inputTargets" class="form-label">Contatos</label>
-                        <input type="text" class="form-control" id="inputTargets" name="inputTargets">
-                    </div>
 
-                    <div class="col-md-2">
-                        <label for="delayInterval" class="form-label">Zip</label>
-                        <input type="number" class="form-control" id="delayInterval" name="delayInterval">
+    <div class="card">
+        <h4 class="card-header">Iniciar Disparos</h4>
+        <div class="card-body">
+            <form class="row g-3" action="{{ url_for('disparos')}}" method="POST" id="disparador" name="formDisparador" enctype="multipart/form-data">
+                <div class="col-md-6">
+                    <label for="inputState" class="form-label">Instâncias online</label>
+                    <select id="inputState" class="form-select" name="selectedInstance">
+                        {% for instance in instances %}
+                            <option>{{ instance }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="flexSwitchCheckDefault" class="form-label">Modo disparo</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" name="disparoAleatorio">
+                        <label class="form-check-label" for="flexSwitchCheckDefault">Ativar instância aleatória</label>
                     </div>
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="gridCheck" name="intervaloAleatorio">
-                            <label class="form-check-label" for="gridCheck">
-                                Intervalo Aleatório
-                            </label>
-                        </div>
+                </div>
+                <div class="col-12">
+                    <label for="exampleFormControlTextarea1" class="form-label" required>Mensagem</label>
+                    <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="textAreaMensagem"></textarea>
+                </div>
+
+                <div class="col-md-12">
+                    <div class="input-group">
+                        <input type="file" class="form-control" id="contactsCSV" name="contactsCSV" accept=".csv" required>
+                        <label class="input-group-text" for="contactsCSV">Upload</label>
                     </div>
-                    <div class="col-12">
-                        <input type="submit" class="btn btn-success btn-sm" value="Inciar disparos">
+                </div>
+                <div class="col-md-4">
+                    <label for="delayInterval" class="form-label">Intervalo entre disparos <code>(segundos)</code></label>
+                    <input type="number" min="0" step="5" class="form-control" id="delayInterval" name="delayInterval" required>
+                </div>
+                <div class="col-6">
+                    <label for="intervaloAleatorio" class="form-label">Modo intervalo disparo</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="intervaloAleatorio" name="intervaloAleatorio">
+                        <label class="form-check-label" for="intervaloAleatorio">Ativar intervalo aleatório</label>
+                        <!-- Mensagem de orientação -->
+                        <p id="orientacaoTexto" class="text-danger" style="display: none;">O intervalo aleatório será considerado entre 0 e o intervalo informado</p>
                     </div>
-                </form>
-            </div>
+                </div>
+                <div class="col-12">
+                    <input type="submit" class="btn btn-success btn-sm" value="Inciar disparos">
+                </div>
+            </form>
         </div>
-   
+    </div>
+
 </div>
 {% endblock %}

@@ -2,57 +2,84 @@ import json
 from flask import jsonify
 import requests
 import random
-
 from sqlalchemy import null
 from models import *
 from time import sleep
 
 
-def disparador(tipo_disparo, linha, tipo_intervalo, intervalo):
+def disparador(configs, recipients):
 
-    leads = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+    for target in recipients:
+        recipient_number = f"55{target[1]}@c.us"
+        recipient_name = target[0]
+        message_content = configs.get("textAreaMensagem")
+        instance = (
+            configs.get("selectedInstance")
+            if not "disparoAleatorio" in configs.keys()
+            else random_instance()
+        )
+        interval = (
+            int(configs.get("delayInterval"))
+            if not "intervaloAleatorio" in configs.keys()
+            else intervalo_aleatorio(int(configs.get("delayInterval")))
+        )
 
-    # Definir se será mais um modelo de mensagem ou uma só mensagem.
-    mensagem = Mensagem.query.filter(id=1)
+        url = f"http://localhost:3000/client/sendMessage/{instance}"
+        payload = json.dumps(
+            {
+                "chatId": recipient_number,
+                "contentType": "string",
+                "content": f"{message_content} \n Esta mensagem esperou {interval} segs para ser enviada!",
+            }
+        )
+        headers = {
+            "accept": "*/*",
+            "x-api-key": "disparadordogerlas",
+            "Content-Type": "application/json",
+        }
+        response = requests.request("POST", url, headers=headers, data=payload)
 
-    if tipo_disparo == "aleatorio":
-        selecionar_linha = linha_aleatoria(linha)
-    elif tipo_disparo == "fixo":
-        selecionar_linha = linha
-    if tipo_intervalo == "aleatorio":
-        intervalo_selecionado = intervalo_aleatorio(intervalo)
-    elif tipo_intervalo == "fixo":
-        intervalo_selecionado = intervalo * 60
-
-    for lead in leads:
-        # API para enviar as mensagens, adaptar de acordo com a ferramenta que será usada
-        # envianozap(lead, mensagem, selecionar_linha)
-        sleep(intervalo_selecionado)
-        ...
+        if response.status_code == 200:
+            print("Mensagem enviada!")
+        else:
+            print("Erro enviando a mensagem!", response.text)
 
 
-def intervalo_aleatorio(intervalo):
+        sleep(float(interval))
+    return jsonify({"OK": "Tarefa finalizada"})   
+
+
+def intervalo_aleatorio(intervalo: int) -> int:
     """
-    Função que recebe o intervalo em minutos e retorna um intervalo
+    Função que recebe o intervalo em minutos
+    e retorna um intervalo
     aleatório em segundos.
     """
-    tempo_em_segundos = intervalo * 60
-
-    intervalo_em_segundos = random.randint(
-        30, tempo_em_segundos
+    intervalo_randomico = random.randint(
+        5, intervalo
     )  # Primeiro argumento vai se referir ao tempo minimo de intervalo. (ex: minimo 30 segundos)
 
-    return intervalo_em_segundos
+    return intervalo_randomico
 
 
-def linha_aleatoria(lista_linhas):
+def random_instance():
     """
     Função seleciona aleatoriamente uma
     linha dentre uma lista de linhas
     """
-    linha = random.choice(lista_linhas)
+    instances = Instances.query.with_entities(Instances.name).all()
 
-    return linha[0]
+    list_instances = [
+        instance
+        for tuples in instances
+        for instance in tuples
+        if get_status(instance) == "Conectado"
+    ]
+
+    if list_instances:
+        return random.choice(list_instances)
+    else:
+        return "Nenhuma instância conectada!"
 
 
 def get_client(id_linha):
@@ -98,9 +125,9 @@ def start_session(id_linha):
 
     response = requests.request("GET", url, headers=headers, data=payload)
     data = json.loads(response.text)
+
     print(data)
     if data.get("success") == True or "Session already exists" in data.get("error"):
- 
         return {"session": "ok"}
     else:
         return {"session": "fail"}
@@ -108,16 +135,23 @@ def start_session(id_linha):
 
 def get_qrcode(id_linha):
     session_status = start_session(id_linha)
+    waiting_qr = 0
     if session_status.get("session") == "ok":
-        url = f"http://localhost:3000/session/qr/{id_linha}"
 
-        payload = {}
-        headers = {"accept": "*/*", "x-api-key": "disparadordogerlas"}
+        while waiting_qr <= 3:
 
-        response = requests.request("GET", url, headers=headers, data=payload)
-        data = json.loads(response.text)
-        print(data)
-        return data
+            url = f"http://localhost:3000/session/qr/{id_linha}"
+            payload = {}
+            headers = {"accept": "*/*", "x-api-key": "disparadordogerlas"}
+            response = requests.request("GET", url, headers=headers, data=payload)
+            data = json.loads(response.text)
+            if "qr" in data.keys():
+
+                return data
+                break
+            else:
+                sleep(3)
+                waiting_qr += 1
     else:
         return jsonify({"error": "erro gerando QR Code"})
 
@@ -135,6 +169,6 @@ def terminate_session(id_linha):
         status = "Desconectado"
     else:
         if "state" in data.keys():
-           if data.get("state") == None:
-               status = "Desconectado"
+            if data.get("state") == None:
+                status = "Desconectado"
     return status
