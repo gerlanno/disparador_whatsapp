@@ -123,36 +123,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             var qrModals = document.querySelectorAll('.modal');
 
-            qrModals.forEach(function (modal) {
-                modal.addEventListener('shown.bs.modal', function (event) {
-
-                    var button = event.relatedTarget; // Botão que acionou o modal
-                    var instancia = button.getAttribute('id'); // Pegando o atributo data do botão
-
-                    // Seleciona o container do QR code para este modal específico
-                    var qrContainer = document.getElementById('qrcode-container-' + instancia);
-
-                    // Faz uma requisição à API para obter o conteúdo do QR Code
-                    var requestUrl = "{{ url_for('qrcode') }}";
-                    fetch(`${requestUrl}?instancia=${instancia}`) // Substitua pelo seu endpoint da API
-                        .then(response => response.json())
-                        .then(data => {
-                            if (!qrContainer.hasChildNodes()) { // Verifica se o QR Code já foi gerado
-                                // Gera o QR code no container com o dado da API
-                                console.log(data)
-                                new QRCode(qrContainer, {
-                                    text: data.qr, // Dado recebido da API
-                                    width: 256,
-                                    height: 256
-                                });
-                            }
-                        })
-                        .catch(error => console.error('Erro ao gerar QR Code:', error));
-                });
-            });
-        });
-    </script>
-    <!-- Geração de QRCODE -->
 
 
     {% endblock %}
