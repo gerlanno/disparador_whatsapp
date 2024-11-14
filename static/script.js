@@ -18,3 +18,5 @@ document.getElementById('intervaloAleatorio').addEventListener('change', functio
 
 
 
+
+

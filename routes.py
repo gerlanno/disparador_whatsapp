@@ -1,6 +1,7 @@
 import csv
 import os
-from flask import redirect, request, render_template, jsonify, url_for
+from sqlalchemy.exc import IntegrityError
+from flask import flash, redirect, request, render_template, jsonify, url_for
 from models import *
 from services import (
     disparador,
@@ -9,15 +10,18 @@ from services import (
     get_qrcode,
     get_status,
     get_client,
+    create_instance,
     terminate_session,
 )
 
 
 def setup_routes(app, db):
+
     @app.route("/")
     def home_page():
-        print(random_instance())
+
         return render_template("index.html")
+
 
     @app.route("/instancias", methods=["GET", "POST"])
     def instancias():
@@ -26,13 +30,16 @@ def setup_routes(app, db):
         if request.method == "GET":
             resultado = []
             instances = Instances.query.all()
+
+           
+
             for instance in instances:
                 session_info = get_client(instance.name)
                 resultado.append(
                     {
                         "id": instance.id,
                         "name": instance.name,
-                        "status": get_status(instance.name),
+                        "status": session_info.get("status"),
                         "client": session_info.get("client"),
                         "phone_number": session_info.get("phone_number"),
                     }
@@ -41,80 +48,6 @@ def setup_routes(app, db):
             # return jsonify({"resultado": resultado})
             return render_template("instancias.html", instancias=resultado)
 
-    # Detalhes das linhas cadastradas
-    @app.route("/linhas/<id>", methods=["GET"])
-    def detalhes_linha(id):
-        if request.method == "GET":
-            resultado = []
-            linhas = Linha.query.filter(Linha.id == id)
-            for linha in linhas:
-                resultado.append(
-                    {
-                        "id": linha.id,
-                        "id_linha": linha.id_linha,
-                        "num_linha": linha.numero,
-                    }
-                )
-            return jsonify({"resultado": resultado})
-
-    @app.route("/mensagens", methods=["GET", "POST"])
-    def mensagens():
-
-        # Listar mensagens
-        if request.method == "GET":
-            resultado = []
-            mensagens = Mensagem.query.all()
-            for mensagem in mensagens:
-                resultado.append(
-                    {
-                        "id": mensagem.id,
-                        "name": mensagem.name,
-                        "conteudo": mensagem.conteudo,
-                    }
-                )
-            return jsonify({"resultado": resultado})
-
-        # Cadastrar Mensagem
-        elif request.method == "POST":
-            name = request.args.get("name")
-            conteudo = request.args.get("conteudo")
-            nova_mensagem = Mensagem(name=name, conteudo=conteudo)
-            try:
-                db.session.add(nova_mensagem)
-                db.session.commit()
-                return jsonify({"status": "sucess"})
-            except Exception as e:
-                print(e)
-                return jsonify({"status": "failed"})
-
-    @app.route("/leads", methods=["GET", "POST"])
-    def leads():
-        # Listar leads
-        if request.method == "GET":
-            resultado = []
-            leads = Lead.query.all()
-            for lead in leads:
-                resultado.append(
-                    {
-                        "id": lead.id,
-                        "nome": lead.nome,
-                        "telefone": lead.telefone,
-                    }
-                )
-            return jsonify({"resultado": resultado})
-
-        # Cadastrar Lead
-        elif request.method == "POST":
-            nome = request.args.get("nome")
-            telefone = request.args.get("telefone")
-            novo_lead = Lead(nome=nome, telefone=telefone)
-            try:
-                db.session.add(novo_lead)
-                db.session.commit()
-                return jsonify({"status": "sucess"})
-            except Exception as e:
-                print(e)
-                return jsonify({"status": "failed"})
 
     @app.route("/disparos", methods=["POST", "GET"])
     def disparos():
@@ -151,58 +84,80 @@ def setup_routes(app, db):
             for key in request.form.keys():
                 value = request.form.get(key)
                 disparos_config[key] = value
-            disparador(disparos_config, contacts_list)
-            return redirect(url_for("home_page")), 200
+            # Receber o status das mensagens enviadas.    
+            status_disparo = disparador(disparos_config, contacts_list)
+            print(status_disparo)
+            if status_disparo:
+                flash(f"Disparos concluídos, Sucessos: {status_disparo.get("Sucesso")} - Erros: {status_disparo.get("Erros")}", "success")
+                return redirect(url_for("disparos"), 302)
+            else: 
+                flash(f"Ocorreu um erro", "danger")
+                return redirect(url_for("disparos"), 302)
+            
         elif request.method == "GET":
 
             resultado = []
             instances = Instances.query.all()
             for instance in instances:
-               if get_status(instance.name) == "Conectado":
-                   resultado.append(instance.name)
-                   
-            print(resultado)
+                if get_status(instance.name) == "Conectado":
+                    resultado.append(instance.name)
+
+            
             return render_template("disparar.html", instances=resultado)
+        
 
     @app.route("/criar-instancias", methods=["POST", "GET"])
     def criar_instancias():
         if request.method == "POST":
-            name = request.form.get("addInstancia")
-            new_instance = Instances(name=name)
+            instance_name = request.form.get("addInstancia").lower()
+            new_instance = Instances(name=instance_name)
             try:
                 db.session.add(new_instance)
-                db.session.commit()
-                return jsonify({"status": "sucess"})
-            except Exception as error:
-                return jsonify({"Erro": error})
+                
+                try:
+                    create_instance(instance_name)
+                    db.session.commit()
+                    flash("Instância cadastrada com sucesso!", "success")
+                except Exception as e:
+                    flash(e, "danger")                
+                return render_template(template_name_or_list="criar-instancia.html")
+            except IntegrityError:
+                db.session.rollback()
+                flash("Já existe uma instância com esse nome!", "danger")
+                return render_template(template_name_or_list="criar-instancia.html")
 
-        return render_template("criar-instancia.html")
+        return render_template(template_name_or_list="criar-instancia.html")
+    
 
     @app.route("/deletar/<id>", methods=["GET"])
     def delete(id):
         if request.method == "GET":
-            Instances.query.filter(Instances.id == id).delete()
-            db.session.commit()
+            try:
+                Instances.query.filter(Instances.id == id).delete()
+                db.session.commit()
+                return redirect(url_for("instancias"), 302)
+            except Exception as e:
+                print(f"Erro excluindo registro: {e}")
+                return redirect(url_for("instancias"), 302)
+        else:
+            return redirect(url_for("index"), 302)
 
-            resultado = []
-            instances = Instances.query.all()
-            for instance in instances:
-                resultado.append(
-                    {
-                        "id": instance.id,
-                        "name": instance.name,
-                    }
-                )
-            # return jsonify({"resultado": resultado})
-            return render_template("instancias.html", numberlist=resultado)
 
     @app.route("/qrcode")
     def qrcode():
-        instance = request.args.get("instancia")
-        print(instance)
-        qrcode = get_qrcode(instance)
-        print("retornando o qrcode..", qrcode)
-        return qrcode, 200
+        try:
+            # Checando se a instância existe.
+            check_instance = db.session.execute(db.select(Instances.name).filter_by(name=request.args.get("instancia"))).scalar_one()
+            print(check_instance)
+            if check_instance:
+                qrcode = get_qrcode(check_instance)
+            else:
+                return {"Erro Gerando QR CODE": "Nenhuma instância localizada"}
+            return qrcode, 200
+        except Exception as e:
+            print(f"Erro gerando QR CODE - {e}")
+            return {"Erro Gerando QR CODE": {e}}
+
 
     @app.route("/terminate/<instance>", methods=["GET"])
     def terminate(instance):
@@ -211,12 +166,13 @@ def setup_routes(app, db):
             # return jsonify({"resultado": resultado})
         return redirect("/instancias", 302)
 
+
     @app.route("/webhook", methods=["POST", "GET"])
     def webhook():
         if request.method == "GET":
             return "<h1>Bad Request</h1>", 400  # Para o caso de dados inválidos no POST
         elif request.method == "POST":
             data = request.get_json()
-            if data:
-                print(data)
+            print(data)
+            return "OK", 200   
         return "<h1>Bad Request</h1>", 400  # Para o caso de dados inválidos no POST

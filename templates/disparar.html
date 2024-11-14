@@ -3,6 +3,29 @@
 
 {% block content %}
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            {% if category == 'danger' %}
+                <div id="alert" class="container text-start">
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                         {{ message }}.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            {% elif category == 'success' %}
+            <div id="alert" class="container text-start">
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill"></i>
+                     {{ message }}.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+            {% endif %}
+{% endfor %}
+{% endif %}
+{% endwith %}
 <div id="inicio" class="container text-start">
 
     <div class="card">
@@ -13,7 +36,7 @@
                     <label for="inputState" class="form-label">Instâncias online</label>
                     <select id="inputState" class="form-select" name="selectedInstance">
                         {% for instance in instances %}
-                            <option>{{ instance }}</option>
+                        <option>{{ instance }}</option>
                         {% endfor %}
                     </select>
                 </div>

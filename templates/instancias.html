@@ -21,6 +21,7 @@
                             </tr>
                         </thead>
                         <tbody class="table-border-bottom-0">
+                            
                             {% for instancia in instancias %}
                             <tr>
                                 <td id="instanceName"><strong>{{ instancia.name }}</strong></td>
@@ -54,6 +55,7 @@
                                 </td>
                             </tr>
                             <!-- Modal de Geração de QRCode -->
+                            
                             <div class="modal fade" id="generateQRCodeModal{{ instancia.name }}" tabindex="-1" aria-labelledby="generateQRCodeLabel{{ instancia.name }}" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
@@ -64,15 +66,17 @@
                                         <div class="modal-body">
                                             <!-- Aqui é onde o QR code será gerado -->
                                             <div id="qrcode-container-{{ instancia.name }}"></div>
-                                            <p>O QR Code é valido por 40 segundos, em caso de erro, recarregar a página.</p>
-
+                                            <p>O QR Code é válido por 40 segundos. Caso expire, clique no botão abaixo para atualizar.</p>
+                                            <!-- Botão para atualizar o QR Code -->
+                                            <button id="refreshQRCode-{{ instancia.name }}" class="btn btn-primary mt-3">Atualizar QR Code</button>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="window.location.reload()">Fechar</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
                             <!-- Modal de Confirmar exclusão de instancia -->
                             <div class="modal fade" id="confirmDeleteModal{{ instancia.id }}" tabindex="-1" aria-labelledby="confirmDeleteLabel{{ instancia.id }}" aria-hidden="true">
                                 <div class="modal-dialog">
@@ -117,12 +121,49 @@
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.min.js"></script>
+   
     <!-- Geração de QRCODE -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var qrModals = document.querySelectorAll('.modal');
 
+            qrModals.forEach(function (modal) {
+                modal.addEventListener('shown.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var instancia = button.getAttribute('id'); // Usando o id do botão como o nome da instância
+                    var qrContainer = document.getElementById('qrcode-container-' + instancia);
+                    var refreshButton = document.getElementById('refreshQRCode-' + instancia);
+                    var requestUrl = "{{ url_for('qrcode') }}";
+
+                    // Função para gerar o QR Code
+                    function gerarQRCode() {
+                        fetch(`${requestUrl}?instancia=${instancia}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                // Limpa o conteúdo anterior (caso exista)
+                                qrContainer.innerHTML = "";
+
+                                // Gera o QR code no container com o dado da API
+                                new QRCode(qrContainer, {
+                                    text: data.code,
+                                    width: 256,
+                                    height: 256
+                                });
+                            })
+                            .catch(error => console.error('Erro ao gerar QR Code:', error));
+                    }
+
+                    // Chama a função para gerar o QR Code inicialmente
+                    gerarQRCode();
+
+                    // Adiciona evento ao botão de atualizar QR code
+                    refreshButton.addEventListener('click', gerarQRCode);
+                });
+            });
+        });
+
+    </script>
+    <!-- Geração de QRCODE -->
 
 
     {% endblock %}

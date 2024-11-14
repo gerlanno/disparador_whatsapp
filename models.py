@@ -32,5 +32,3 @@ class Lead(db.Model):
     def __repr__(self) -> str:
         return f"Lead: {self.id} - {self.lead_name} - {self.phone_number}"
     
-
-    
